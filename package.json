@@ -1,0 +1,24 @@
+{
+  "name": "contextclock-desktop",
+  "version": "1.0.0",
+  "description": "ContextClock MCP Server — AI Temporal Context for Claude Desktop",
+  "main": "build/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc",
+    "start": "node build/index.js",
+    "dev": "ts-node src/index.ts"
+  },
+  "bin": {
+    "contextclock-desktop": "./build/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.8.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
+  }
+}

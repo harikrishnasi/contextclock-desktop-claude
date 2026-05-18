@@ -1,0 +1,48 @@
+{
+  "manifest_version": "0.2",
+  "name": "contextclock-desktop",
+  "display_name": "ContextClock",
+  "version": "1.0.0",
+  "description": "Gives Claude Desktop real-time temporal context — time, date, and period of day injected into every conversation.",
+  "author": {
+    "name": "Your Name"
+  },
+  "homepage": "https://github.com/yourusername/ContextClock",
+  "server": {
+    "type": "node",
+    "entry_point": "build/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/build/index.js"
+      ],
+      "env": {}
+    }
+  },
+  "icon": "icon128.png",
+  "tools": [
+    {
+      "name": "get_current_time",
+      "description": "Get the current local time, date, and period of day"
+    },
+    {
+      "name": "get_elapsed_time",
+      "description": "Calculate human-readable elapsed time since a given ISO timestamp"
+    }
+  ],
+  "prompts": [
+    {
+      "name": "temporal_context",
+      "description": "Inject current temporal context into the conversation",
+      "text": "Please keep this temporal context in mind throughout our conversation."
+    }
+  ],
+  "keywords": [
+    "time",
+    "context",
+    "temporal",
+    "ai",
+    "claude"
+  ],
+  "license": "MIT"
+}
