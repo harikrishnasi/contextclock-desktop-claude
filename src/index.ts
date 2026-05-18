@@ -4,6 +4,10 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
+// ─── State ─────────────────────────────────────────────────────────────────
+let lastCheckedAt: number | null = null;
+const REFRESH_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+
 // ─── Time Helpers ──────────────────────────────────────────────────────────
 
 function getPeriod(hours: number): string {
@@ -20,50 +24,111 @@ function getTemporalContext(): string {
   const ampm = hours >= 12 ? "PM" : "AM";
   const displayHours = hours % 12 || 12;
   const period = getPeriod(hours);
-  const months = ["Jan","Feb","Mar","Apr","May","Jun",
-                   "Jul","Aug","Sep","Oct","Nov","Dec"];
-  const month = months[now.getMonth()];
-  const day = now.getDate();
-  const year = now.getFullYear();
-  const dayNames = ["Sunday","Monday","Tuesday","Wednesday",
-                    "Thursday","Friday","Saturday"];
-  const dayName = dayNames[now.getDay()];
-
+  const months = [
+    "Jan","Feb","Mar","Apr","May","Jun",
+    "Jul","Aug","Sep","Oct","Nov","Dec",
+  ];
+  const dayNames = [
+    "Sunday","Monday","Tuesday","Wednesday",
+    "Thursday","Friday","Saturday",
+  ];
+  const now2 = new Date();
   return [
     `Time: ${displayHours}:${minutes} ${ampm}`,
     `Period: ${period}`,
-    `Date: ${dayName}, ${month} ${day}, ${year}`,
+    `Date: ${dayNames[now2.getDay()]}, ${months[now2.getMonth()]} ${now2.getDate()}, ${now2.getFullYear()}`,
   ].join(" | ");
 }
 
-// ─── MCP Server Setup ──────────────────────────────────────────────────────
+function getElapsedSinceLastCheck(): string {
+  if (!lastCheckedAt) return "first check";
+  const diffMs = Date.now() - lastCheckedAt;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffMins < 1) return "just now";
+  if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? "s" : ""} ago`;
+  return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+}
+
+function shouldRefresh(): boolean {
+  if (!lastCheckedAt) return true;
+  return Date.now() - lastCheckedAt > REFRESH_INTERVAL_MS;
+}
+
+// ─── MCP Server ────────────────────────────────────────────────────────────
 
 const server = new McpServer({
   name: "contextclock-desktop",
   version: "1.0.0",
   // @ts-ignore - The 'instructions' field is required by Claude Desktop but might be missing in SDK types
-  instructions: "IMPORTANT: At the start of every single conversation, " +
-    "you MUST call the get_current_time tool before responding. " +
-    "This gives you accurate temporal context so your responses are " +
-    "time-appropriate. Never skip this step."
+  instructions: `
+You are connected to ContextClock — an AI temporal context server.
+
+RULES YOU MUST ALWAYS FOLLOW:
+1. At the START of every new conversation, call get_current_time immediately 
+   before your first response. No exceptions.
+
+2. Before EVERY message you send, call should_refresh_time first.
+   - If it returns { refresh: true }, call get_current_time immediately 
+     to get updated time before responding.
+   - If it returns { refresh: false }, proceed normally.
+
+3. When the user mentions ANY time-sensitive phrase — "just woke up", 
+   "good morning", "good night", "just got back", "I'm back", 
+   "been a while", "long time" — always call get_current_time 
+   to refresh your temporal context before responding.
+
+4. Never assume you know the time. Always trust ContextClock.
+  `.trim(),
 });
+
+// ─── Tool: should_refresh_time ─────────────────────────────────────────────
+
+server.tool(
+  "should_refresh_time",
+  "Check if temporal context needs refreshing. Call this before every response. " +
+  "If refresh is true, immediately call get_current_time before responding.",
+  {},
+  async () => {
+    const refresh = shouldRefresh();
+    const lastCheck = getElapsedSinceLastCheck();
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({
+            refresh,
+            reason: refresh
+              ? `Last time check was ${lastCheck}. Time context is stale — call get_current_time now.`
+              : `Time context is fresh. Last checked ${lastCheck}. No refresh needed.`,
+            lastCheckedAt: lastCheckedAt
+              ? new Date(lastCheckedAt).toISOString()
+              : null,
+          }),
+        },
+      ],
+    };
+  }
+);
 
 // ─── Tool: get_current_time ────────────────────────────────────────────────
 
 server.tool(
   "get_current_time",
   "Get the current local time, date, and period of day. " +
-  "Always call this at the start of every conversation to establish temporal context.",
+  "Call this at conversation start and whenever should_refresh_time returns { refresh: true }.",
   {},
   async () => {
+    lastCheckedAt = Date.now();
     const context = getTemporalContext();
+
     return {
       content: [
         {
           type: "text",
-          text: `[${context}]\n\nContextClock has injected temporal context. ` +
-                `You now know the current time and date. ` +
-                `Use this to give time-appropriate, context-aware responses.`,
+          text: `[${context}]\n\nContextClock refreshed. Temporal context is now current. ` +
+                `Use this to give time-appropriate responses.`,
         },
       ],
     };
@@ -88,15 +153,17 @@ server.tool(
 
     let elapsed = "";
     if (diffMins < 1) elapsed = "just now";
-    else if (diffMins < 60) elapsed = `${diffMins} minute${diffMins > 1 ? "s" : ""} ago`;
-    else if (diffHours < 24) elapsed = `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+    else if (diffMins < 60)
+      elapsed = `${diffMins} minute${diffMins > 1 ? "s" : ""} ago`;
+    else if (diffHours < 24)
+      elapsed = `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
     else elapsed = `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
 
     return {
       content: [
         {
           type: "text",
-          text: `Last message was sent ${elapsed}.\nCurrent time: [${getTemporalContext()}]`,
+          text: `Elapsed: ${elapsed}\nCurrent time: [${getTemporalContext()}]`,
         },
       ],
     };
@@ -104,13 +171,13 @@ server.tool(
 );
 
 // ─── Prompt: temporal_context ──────────────────────────────────────────────
-// This prompt template tells Claude to always be time-aware
 
 server.prompt(
   "temporal_context",
-  "Inject current temporal context into the conversation",
+  "Manually inject current temporal context into the conversation",
   {},
   async () => {
+    lastCheckedAt = Date.now();
     const context = getTemporalContext();
     return {
       messages: [
@@ -118,8 +185,8 @@ server.prompt(
           role: "user",
           content: {
             type: "text",
-            text: `[${context}] — Please keep this temporal context in mind throughout our conversation. ` +
-                  `Give responses appropriate to the time of day and date.`,
+            text: `[${context}] — Please keep this temporal context in mind ` +
+                  `throughout our conversation and give time-appropriate responses.`,
           },
         },
       ],
@@ -127,7 +194,7 @@ server.prompt(
   }
 );
 
-// ─── Start Server ──────────────────────────────────────────────────────────
+// ─── Start ─────────────────────────────────────────────────────────────────
 
 async function main() {
   const transport = new StdioServerTransport();
