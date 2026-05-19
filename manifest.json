@@ -5,9 +5,10 @@
   "version": "1.0.0",
   "description": "By default, Claude Desktop has no concept of the current time. ContextClock fixes this by automatically injecting real-time temporal context into every conversation. It forces Claude to check the time before responding, tracks elapsed time during long chats, converts global timezones, and adapts to your custom working hours and off-days so Claude knows exactly when you're 'on the clock'.",
   "author": {
-    "name": "Hari Krishna S I"
+    "name": "Hari Krishna S I",
+    "url": "https://github.com/harikrishnasi"
   },
-  "homepage": "https://github.com/yourusername/ContextClock",
+  "homepage": "https://github.com/harikrishnasi/contextclock-desktop-claude",
   "server": {
     "type": "node",
     "entry_point": "build/index.js",
