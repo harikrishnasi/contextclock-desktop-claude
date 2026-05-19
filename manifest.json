@@ -28,6 +28,10 @@
     {
       "name": "get_elapsed_time",
       "description": "Calculate human-readable elapsed time since a given ISO timestamp"
+    },
+    {
+      "name": "should_refresh_time",
+      "description": "Check if temporal context needs refreshing. Call this before every response."
     }
   ],
   "prompts": [
