@@ -16,7 +16,9 @@
       "args": [
         "${__dirname}/build/index.js"
       ],
-      "env": {}
+      "env": {
+        "REFRESH_INTERVAL_MINS": "${user_config.refresh_interval}"
+      }
     }
   },
   "icon": "icon128.png",
@@ -32,6 +34,10 @@
     {
       "name": "should_refresh_time",
       "description": "Check if temporal context needs refreshing. Call this before every response."
+    },
+    {
+      "name": "convert_timezone",
+      "description": "Convert current local time to a specified IANA timezone (e.g. 'Europe/London')"
     }
   ],
   "prompts": [
@@ -48,5 +54,16 @@
     "ai",
     "claude"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "user_config": {
+    "refresh_interval": {
+      "type": "number",
+      "title": "Refresh Interval (Minutes)",
+      "description": "How often Claude should automatically refresh its time context.",
+      "default": 30,
+      "min": 1,
+      "max": 1440,
+      "required": false
+    }
+  }
 }

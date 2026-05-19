@@ -6,7 +6,10 @@ import { z } from "zod";
 
 // ─── State ─────────────────────────────────────────────────────────────────
 let lastCheckedAt: number | null = null;
-const REFRESH_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+const envIntervalMins = process.env.REFRESH_INTERVAL_MINS
+  ? parseInt(process.env.REFRESH_INTERVAL_MINS, 10)
+  : 30;
+const REFRESH_INTERVAL_MS = (isNaN(envIntervalMins) ? 30 : envIntervalMins) * 60 * 1000;
 
 // ─── Time Helpers ──────────────────────────────────────────────────────────
 
@@ -33,10 +36,17 @@ function getTemporalContext(): string {
     "Thursday","Friday","Saturday",
   ];
   const now2 = new Date();
+  const isWeekend = now2.getDay() === 0 || now2.getDay() === 6;
+  const isWorkingHours = hours >= 9 && hours < 17;
+  const status = isWeekend 
+    ? "Weekend (Outside working hours)" 
+    : (isWorkingHours ? "Weekday (Working hours)" : "Weekday (Outside working hours)");
+
   return [
     `Time: ${displayHours}:${minutes} ${ampm}`,
     `Period: ${period}`,
     `Date: ${dayNames[now2.getDay()]}, ${months[now2.getMonth()]} ${now2.getDate()}, ${now2.getFullYear()}`,
+    `Status: ${status}`,
   ].join(" | ");
 }
 
@@ -167,6 +177,42 @@ server.tool(
         },
       ],
     };
+  }
+);
+
+// ─── Tool: convert_timezone ────────────────────────────────────────────────
+
+server.tool(
+  "convert_timezone",
+  "Convert current local time to a specified IANA timezone (e.g. 'Europe/London')",
+  {
+    target_timezone: z.string().describe("IANA timezone string (e.g. 'America/New_York')"),
+  },
+  async ({ target_timezone }) => {
+    try {
+      const formatted = new Date().toLocaleString("en-US", {
+        timeZone: target_timezone,
+        dateStyle: "full",
+        timeStyle: "long",
+      });
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Current time in ${target_timezone}: ${formatted}`,
+          },
+        ],
+      };
+    } catch (e) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error: Invalid timezone '${target_timezone}'. Please provide a valid IANA timezone string like 'Europe/London' or 'America/New_York'.`,
+          },
+        ],
+      };
+    }
   }
 );
 
