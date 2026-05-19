@@ -11,6 +11,11 @@ const envIntervalMins = process.env.REFRESH_INTERVAL_MINS
   : 30;
 const REFRESH_INTERVAL_MS = (isNaN(envIntervalMins) ? 30 : envIntervalMins) * 60 * 1000;
 
+const WORK_START_HOUR = process.env.WORK_START_HOUR ? parseInt(process.env.WORK_START_HOUR, 10) : 9;
+const WORK_END_HOUR = process.env.WORK_END_HOUR ? parseInt(process.env.WORK_END_HOUR, 10) : 17;
+const WORK_DAYS_RAW = process.env.WORK_DAYS || "Monday, Tuesday, Wednesday, Thursday, Friday";
+const WORK_DAYS = WORK_DAYS_RAW.toLowerCase().split(",").map((d) => d.trim());
+
 // ─── Time Helpers ──────────────────────────────────────────────────────────
 
 function getPeriod(hours: number): string {
@@ -36,11 +41,15 @@ function getTemporalContext(): string {
     "Thursday","Friday","Saturday",
   ];
   const now2 = new Date();
-  const isWeekend = now2.getDay() === 0 || now2.getDay() === 6;
-  const isWorkingHours = hours >= 9 && hours < 17;
-  const status = isWeekend 
-    ? "Weekend (Outside working hours)" 
-    : (isWorkingHours ? "Weekday (Working hours)" : "Weekday (Outside working hours)");
+  const currentDayName = dayNames[now2.getDay()].toLowerCase();
+  const isWorkingDay = WORK_DAYS.includes(currentDayName);
+  const safeStart = isNaN(WORK_START_HOUR) ? 9 : WORK_START_HOUR;
+  const safeEnd = isNaN(WORK_END_HOUR) ? 17 : WORK_END_HOUR;
+  const isWorkingHours = hours >= safeStart && hours < safeEnd;
+  
+  const status = isWorkingDay 
+    ? (isWorkingHours ? "On-duty (Working hours)" : "Off-duty (Outside working hours)")
+    : "Day Off (Non-working day)";
 
   return [
     `Time: ${displayHours}:${minutes} ${ampm}`,

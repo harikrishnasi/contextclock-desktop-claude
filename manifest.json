@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "description": "Gives Claude Desktop real-time temporal context — time, date, and period of day injected into every conversation.",
   "author": {
-    "name": "Your Name"
+    "name": "Hari Krishna S I"
   },
   "homepage": "https://github.com/yourusername/ContextClock",
   "server": {
@@ -17,7 +17,10 @@
         "${__dirname}/build/index.js"
       ],
       "env": {
-        "REFRESH_INTERVAL_MINS": "${user_config.refresh_interval}"
+        "REFRESH_INTERVAL_MINS": "${user_config.refresh_interval}",
+        "WORK_START_HOUR": "${user_config.work_start_hour}",
+        "WORK_END_HOUR": "${user_config.work_end_hour}",
+        "WORK_DAYS": "${user_config.work_days}"
       }
     }
   },
@@ -63,6 +66,31 @@
       "default": 30,
       "min": 1,
       "max": 1440,
+      "required": false
+    },
+    "work_start_hour": {
+      "type": "number",
+      "title": "Work Start Hour",
+      "description": "The hour you start work (0-23, e.g. 9 for 9 AM).",
+      "default": 9,
+      "min": 0,
+      "max": 23,
+      "required": false
+    },
+    "work_end_hour": {
+      "type": "number",
+      "title": "Work End Hour",
+      "description": "The hour you finish work (0-23, e.g. 17 for 5 PM).",
+      "default": 17,
+      "min": 0,
+      "max": 23,
+      "required": false
+    },
+    "work_days": {
+      "type": "string",
+      "title": "Working Days",
+      "description": "Comma-separated list of working days.",
+      "default": "Monday, Tuesday, Wednesday, Thursday, Friday",
       "required": false
     }
   }
