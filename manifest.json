@@ -20,7 +20,13 @@
         "REFRESH_INTERVAL_MINS": "${user_config.refresh_interval}",
         "WORK_START_HOUR": "${user_config.work_start_hour}",
         "WORK_END_HOUR": "${user_config.work_end_hour}",
-        "WORK_DAYS": "${user_config.work_days}"
+        "WORK_MON": "${user_config.work_monday}",
+        "WORK_TUE": "${user_config.work_tuesday}",
+        "WORK_WED": "${user_config.work_wednesday}",
+        "WORK_THU": "${user_config.work_thursday}",
+        "WORK_FRI": "${user_config.work_friday}",
+        "WORK_SAT": "${user_config.work_saturday}",
+        "WORK_SUN": "${user_config.work_sunday}"
       }
     }
   },
@@ -86,12 +92,47 @@
       "max": 23,
       "required": false
     },
-    "work_days": {
-      "type": "string",
-      "title": "Working Days",
-      "description": "Comma-separated list of working days.",
-      "default": "Monday, Tuesday, Wednesday, Thursday, Friday",
-      "required": false
+    "work_monday": {
+      "type": "boolean",
+      "title": "Work on Monday",
+      "description": "Check if you work on Mondays.",
+      "default": true
+    },
+    "work_tuesday": {
+      "type": "boolean",
+      "title": "Work on Tuesday",
+      "description": "Check if you work on Tuesdays.",
+      "default": true
+    },
+    "work_wednesday": {
+      "type": "boolean",
+      "title": "Work on Wednesday",
+      "description": "Check if you work on Wednesdays.",
+      "default": true
+    },
+    "work_thursday": {
+      "type": "boolean",
+      "title": "Work on Thursday",
+      "description": "Check if you work on Thursdays.",
+      "default": true
+    },
+    "work_friday": {
+      "type": "boolean",
+      "title": "Work on Friday",
+      "description": "Check if you work on Fridays.",
+      "default": true
+    },
+    "work_saturday": {
+      "type": "boolean",
+      "title": "Work on Saturday",
+      "description": "Check if you work on Saturdays.",
+      "default": false
+    },
+    "work_sunday": {
+      "type": "boolean",
+      "title": "Work on Sunday",
+      "description": "Check if you work on Sundays.",
+      "default": false
     }
   }
 }

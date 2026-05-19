@@ -13,8 +13,15 @@ const REFRESH_INTERVAL_MS = (isNaN(envIntervalMins) ? 30 : envIntervalMins) * 60
 
 const WORK_START_HOUR = process.env.WORK_START_HOUR ? parseInt(process.env.WORK_START_HOUR, 10) : 9;
 const WORK_END_HOUR = process.env.WORK_END_HOUR ? parseInt(process.env.WORK_END_HOUR, 10) : 17;
-const WORK_DAYS_RAW = process.env.WORK_DAYS || "Monday, Tuesday, Wednesday, Thursday, Friday";
-const WORK_DAYS = WORK_DAYS_RAW.toLowerCase().split(",").map((d) => d.trim());
+const WORK_DAYS_MAP: Record<string, boolean> = {
+  monday: process.env.WORK_MON !== "false",
+  tuesday: process.env.WORK_TUE !== "false",
+  wednesday: process.env.WORK_WED !== "false",
+  thursday: process.env.WORK_THU !== "false",
+  friday: process.env.WORK_FRI !== "false",
+  saturday: process.env.WORK_SAT === "true",
+  sunday: process.env.WORK_SUN === "true",
+};
 
 // ─── Time Helpers ──────────────────────────────────────────────────────────
 
@@ -42,7 +49,7 @@ function getTemporalContext(): string {
   ];
   const now2 = new Date();
   const currentDayName = dayNames[now2.getDay()].toLowerCase();
-  const isWorkingDay = WORK_DAYS.includes(currentDayName);
+  const isWorkingDay = WORK_DAYS_MAP[currentDayName];
   const safeStart = isNaN(WORK_START_HOUR) ? 9 : WORK_START_HOUR;
   const safeEnd = isNaN(WORK_END_HOUR) ? 17 : WORK_END_HOUR;
   const isWorkingHours = hours >= safeStart && hours < safeEnd;
