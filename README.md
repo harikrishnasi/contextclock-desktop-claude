@@ -55,3 +55,6 @@ That's it! Open a new chat and ask Claude: *"What is my working status right now
 
 **Developed by Hari Krishna S I**
 *Built with ❤️ using the Model Context Protocol.*
+
+## 📜 License
+This project is licensed under the [MIT License](LICENSE).
